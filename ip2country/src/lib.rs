@@ -97,6 +97,33 @@ impl AsnDB {
         Ok(self)
     }
 
+    pub fn load_ipv4_from_str<T>(mut self, s: &str) -> Result<Self>
+    where
+        T: FromStr<Err = ParseIntError>
+            + From<u32>
+            + PartialEq
+            + Copy
+            + Add<Output = T>
+            + std::fmt::Debug,
+    {
+        let mut last_end = None;
+        for line in s.lines() {
+            let (gap, entry, end) = Asn::<u32>::new(&line, last_end)?;
+
+            last_end = Some(end);
+
+            if let Some(gap) = gap {
+                self.ip_db_v4.push(gap);
+            }
+
+            self.ip_db_v4.push(entry);
+        }
+
+        self.ip_db_v4.shrink_to_fit();
+
+        Ok(self)
+    }
+
     /// loads csv file of format: ip-range-start (v6),ip-range-end,short-country-code
     ///
     /// # Errors
